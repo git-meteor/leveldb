@@ -1699,44 +1699,46 @@ void BM_LogAndApply(int iters, int num_base_files) {
 TEST(DBTest, CompactionBug_Issue77) {
 	Random rnd(301);
 
-	int key_count = 60000;
+	int key_count = 1000000;
+	int get_key_count = 1000000;
+	int limit = 100000;
 
   Env* env = Env::Default();
 
   {
     uint64_t start_micros = env->NowMicros();
     for(int i = 0; i < key_count; ++i){
-      ASSERT_OK(Put(Key(i), Key(i)));
-
+      ASSERT_OK(Put(Key(i), RandomString(&rnd, 10)));
+      if(i >= limit){
+        ASSERT_OK(Delete(Key(i - limit)));
+      }
     }
     uint64_t stop_micros = env->NowMicros();
     unsigned int time = stop_micros - start_micros;
     printf("write time: %9u us\n", time);
   }
 
-  bool deleted = false;
+//  bool deleted = false;
+//
+//  {
+//    uint64_t start_micros = env->NowMicros();
+//    for(int i = 0; i < key_count; ++i){
+//      ASSERT_OK(Delete(Key(i)));
+//    }
+//    deleted = true;
+//    uint64_t stop_micros = env->NowMicros();
+//    unsigned int time = stop_micros - start_micros;
+//    printf("delete time: %9u us\n", time);
+//  }
+
+  dbfull()->TEST_CompactMemTable();
 
   {
     uint64_t start_micros = env->NowMicros();
-    for(int i = 0; i < key_count; ++i){
-      ASSERT_OK(Delete(Key(i)));
-    }
-    deleted = true;
-    uint64_t stop_micros = env->NowMicros();
-    unsigned int time = stop_micros - start_micros;
-    printf("delete time: %9u us\n", time);
-  }
 
-  {
-    uint64_t start_micros = env->NowMicros();
-    if(deleted){
-      for(int i = 0; i < key_count; ++i){
-        ASSERT_EQ("NOT_FOUND", Get(Key(i)));
-      }
-    } else {
-      for(int i = 0; i < key_count; ++i){
-        ASSERT_EQ(Key(i), Get(Key(i)));
-      }
+    Iterator* iter = db_->NewIterator(ReadOptions());
+    for(iter->SeekToFirst(); iter->Valid(); iter->Next()){
+      printf("%s\n", iter->key().ToString().c_str());
     }
     uint64_t stop_micros = env->NowMicros();
     unsigned int time = stop_micros - start_micros;
