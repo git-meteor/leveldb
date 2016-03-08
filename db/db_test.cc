@@ -1696,6 +1696,55 @@ void BM_LogAndApply(int iters, int num_base_files) {
           buf, iters, us, ((float)us) / iters);
 }
 
+TEST(DBTest, CompactionBug_Issue77) {
+	Random rnd(301);
+
+	int key_count = 60000;
+
+  Env* env = Env::Default();
+
+  {
+    uint64_t start_micros = env->NowMicros();
+    for(int i = 0; i < key_count; ++i){
+      ASSERT_OK(Put(Key(i), Key(i)));
+
+    }
+    uint64_t stop_micros = env->NowMicros();
+    unsigned int time = stop_micros - start_micros;
+    printf("write time: %9u us\n", time);
+  }
+
+  bool deleted = false;
+
+  {
+    uint64_t start_micros = env->NowMicros();
+    for(int i = 0; i < key_count; ++i){
+      ASSERT_OK(Delete(Key(i)));
+    }
+    deleted = true;
+    uint64_t stop_micros = env->NowMicros();
+    unsigned int time = stop_micros - start_micros;
+    printf("delete time: %9u us\n", time);
+  }
+
+  {
+    uint64_t start_micros = env->NowMicros();
+    if(deleted){
+      for(int i = 0; i < key_count; ++i){
+        ASSERT_EQ("NOT_FOUND", Get(Key(i)));
+      }
+    } else {
+      for(int i = 0; i < key_count; ++i){
+        ASSERT_EQ(Key(i), Get(Key(i)));
+      }
+    }
+    uint64_t stop_micros = env->NowMicros();
+    unsigned int time = stop_micros - start_micros;
+    printf("get time: %9u us\n", time);
+  }
+}
+
+
 }  // namespace leveldb
 
 int main(int argc, char** argv) {
