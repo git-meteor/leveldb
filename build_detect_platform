@@ -55,12 +55,12 @@ fi
 
 COMMON_FLAGS=
 CROSS_COMPILE=
-PLATFORM_CCFLAGS=
-PLATFORM_CXXFLAGS=
+PLATFORM_CCFLAGS="-I/home/huangxin10/target/include"
+PLATFORM_CXXFLAGS="-I/home/huangxin10/target/include"
 PLATFORM_LDFLAGS=
 PLATFORM_LIBS=
 PLATFORM_SHARED_EXT="so"
-PLATFORM_SHARED_LDFLAGS="-shared -Wl,-soname -Wl,"
+PLATFORM_SHARED_LDFLAGS="-L/home/huangxin10/target/lib -shared -Wl,-soname -Wl,"
 PLATFORM_SHARED_CFLAGS="-fPIC"
 PLATFORM_SHARED_VERSIONED=true
 
@@ -183,6 +183,8 @@ EOF
         COMMON_FLAGS="$COMMON_FLAGS -DSNAPPY"
         PLATFORM_LIBS="$PLATFORM_LIBS -lsnappy"
     fi
+    COMMON_FLAGS="$COMMON_FLAGS -DSNAPPY"
+    PLATFORM_LIBS="$PLATFORM_LIBS -lsnappy"
 
     # Test whether tcmalloc is available
     $CXX $CXXFLAGS -x c++ - -o $CXXOUTPUT -ltcmalloc 2>/dev/null  <<EOF
@@ -195,8 +197,9 @@ EOF
     rm -f $CXXOUTPUT 2>/dev/null
 fi
 
-PLATFORM_CCFLAGS="$PLATFORM_CCFLAGS $COMMON_FLAGS"
-PLATFORM_CXXFLAGS="$PLATFORM_CXXFLAGS $COMMON_FLAGS"
+PLATFORM_CCFLAGS="$PLATFORM_CCFLAGS $COMMON_FLAGS -I/home/huangxin10/target/include"
+PLATFORM_CXXFLAGS="$PLATFORM_CXXFLAGS $COMMON_FLAGS -I/home/huangxin10/target/include"
+PLATFORM_LDFLAGS="$PLATFORM_LDFLAGS -L/home/huangxin10/target/lib"
 
 echo "CC=$CC" >> $OUTPUT
 echo "CXX=$CXX" >> $OUTPUT
